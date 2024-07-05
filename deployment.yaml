@@ -1,19 +1,19 @@
-apiVersion: batch/v1
-kind: CronJob
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: myapp-cronjob
+  name: myapp
 spec:
-  schedule: "0 * * * *"  # Replace with your desired cron schedule (runs every hour in this example)
-  jobTemplate:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
     spec:
-      template:
-        metadata:
-          labels:
-            app: myapp
-        spec:
-          containers:
-          - name: myapp
-            image: acrstage.azurecr.io/semi22/my-talend-job:latest
-            ports:
-            - containerPort: 80
-          restartPolicy: Never  # Or use Never if you want the job to run exactly once per scheduled time
+      containers:
+      - name: myapp
+        image: acrstage.azurecr.io/semi22/my-talend-job:latest
+        ports:
+        - containerPort: 80
