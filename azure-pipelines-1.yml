@@ -1,7 +1,3 @@
-# Deploy to Azure Kubernetes Service
-# Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
-# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
-
 trigger:
 - main
 
@@ -9,18 +5,13 @@ resources:
 - repo: self
 
 variables:
-
-  # Container registry service connection established during pipeline creation
   dockerRegistryServiceConnection: 'b9df0dc1-a7dc-4078-a44d-66f1f310e620'
   imageRepository: 'semikallelsummerinternship'
   containerRegistry: 'acrstage.azurecr.io'
   dockerfilePath: '**/Dockerfile'
   tag: '$(Build.BuildId)'
   imagePullSecret: 'acrstage0825-auth'
-
-  # Agent VM image name
   vmImageName: 'ubuntu-latest'
-
 
 stages:
 - stage: Build
@@ -40,14 +31,13 @@ stages:
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(tag)
-
+    
     - upload: manifests
       artifact: manifests
 
 - stage: Deploy
   displayName: Deploy stage
   dependsOn: Build
-
   jobs:
   - deployment: Deploy
     displayName: Deploy
@@ -76,9 +66,7 @@ stages:
                 $(imagePullSecret)
               containers: |
                 $(containerRegistry)/$(imageRepository):$(tag)
-              kubectlOutputFormat: 'json'
-              checkManifestStability: true
-              enableConfigSubstitution: true
-              enablePodDisruptionBudget: false
-              arguments: '--timeout=300s'
 
+          - script: |
+              kubectl rollout status deployment/semikallelsummerinternship --timeout=300s --namespace default
+            displayName: 'Check Deployment Status'
