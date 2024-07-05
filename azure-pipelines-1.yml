@@ -76,4 +76,9 @@ stages:
                 $(imagePullSecret)
               containers: |
                 $(containerRegistry)/$(imageRepository):$(tag)
+              kubectlOutputFormat: 'json'
+              checkManifestStability: true
+              enableConfigSubstitution: true
+              enablePodDisruptionBudget: false
+              arguments: '--timeout=300s'
 
