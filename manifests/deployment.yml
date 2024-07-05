@@ -1,0 +1,19 @@
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: semikallelsummerinternship 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: semikallelsummerinternship
+  template:
+    metadata:
+      labels:
+        app: semikallelsummerinternship 
+    spec:
+      containers:
+        - name: semikallelsummerinternship 
+          image: acrstage.azurecr.io/semikallelsummerinternship
+          ports:
+          - containerPort: 80
