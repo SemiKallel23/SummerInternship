@@ -37,7 +37,12 @@ stages:
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(tag)
-    
+
+    - script: |
+        mkdir -p $(Pipeline.Workspace)/manifests
+        cp path/to/your/manifests/* $(Pipeline.Workspace)/manifests/
+      displayName: 'Copy manifests to workspace'
+
     - publish: $(Pipeline.Workspace)/manifests
       artifact: manifests
 
@@ -76,4 +81,3 @@ stages:
           - script: |
               kubectl rollout status deployment/semikallelsummerinternship --timeout=300s --namespace default
             displayName: 'Check Deployment Status'
-
