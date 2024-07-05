@@ -1,83 +1,54 @@
+# Deploy to Azure Kubernetes Service
+# Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
 trigger:
 - main
 
 resources:
-  repositories:
-  - repository: self
-    type: github
-    name: SemiKallel23/SummerInternship
-    ref: main
+- repo: self
 
 variables:
+
+  # Container registry service connection established during pipeline creation
   dockerRegistryServiceConnection: 'b9df0dc1-a7dc-4078-a44d-66f1f310e620'
   imageRepository: 'semikallelsummerinternship'
   containerRegistry: 'acrstage.azurecr.io'
   dockerfilePath: '**/Dockerfile'
   tag: '$(Build.BuildId)'
   imagePullSecret: 'acrstage0825-auth'
+
+  # Agent VM image name
   vmImageName: 'ubuntu-latest'
+
 
 stages:
 - stage: Build
   displayName: Build stage
-  jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      vmImage: $(vmImageName)
-    steps:
-    - checkout: self
-
-    - task: Docker@2
-      displayName: Build and push an image to container registry
-      inputs:
-        command: buildAndPush
-        repository: $(imageRepository)
-        dockerfile: $(dockerfilePath)
+@@ -40,14 +31,13 @@ stages:
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(tag)
-
-    - script: |
-        mkdir -p $(Pipeline.Workspace)/manifests
-        cp path/to/your/manifests/* $(Pipeline.Workspace)/manifests/
-      displayName: 'Copy manifests to workspace'
-
-    - publish: $(Pipeline.Workspace)/manifests
+    
+    - upload: manifests
       artifact: manifests
 
 - stage: Deploy
   displayName: Deploy stage
   dependsOn: Build
+
   jobs:
   - deployment: Deploy
     displayName: Deploy
-    pool:
-      vmImage: $(vmImageName)
-    environment: 'SemiKallel23SummerInternship.default'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - task: KubernetesManifest@0
-            displayName: Create imagePullSecret
-            inputs:
-              action: createSecret
-              secretName: $(imagePullSecret)
-              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
-
-          - task: KubernetesManifest@0
-            displayName: Deploy to Kubernetes cluster
-            inputs:
-              action: deploy
-              manifests: |
-                $(Pipeline.Workspace)/manifests/deployment.yml
-                $(Pipeline.Workspace)/manifests/service.yml
-              imagePullSecrets: |
+@@ -76,9 +66,7 @@ stages:
                 $(imagePullSecret)
               containers: |
                 $(containerRegistry)/$(imageRepository):$(tag)
-
+              kubectlOutputFormat: 'json'
+              checkManifestStability: true
+              enableConfigSubstitution: true
+              enablePodDisruptionBudget: false
+              arguments: '--timeout=300s'
           - script: |
               kubectl rollout status deployment/semikallelsummerinternship --timeout=300s --namespace default
             displayName: 'Check Deployment Status'
