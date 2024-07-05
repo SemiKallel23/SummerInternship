@@ -1,3 +1,7 @@
+# Deploy to Azure Kubernetes Service
+# Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
 trigger:
 - main
 
@@ -27,8 +31,6 @@ stages:
     pool:
       vmImage: $(vmImageName)
     steps:
-    - checkout: self
-
     - task: Docker@2
       displayName: Build and push an image to container registry
       inputs:
@@ -38,13 +40,7 @@ stages:
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(tag)
-
-    - script: |
-        mkdir -p $(Pipeline.Workspace)/manifests
-        cp path/to/your/manifests/* $(Pipeline.Workspace)/manifests/
-      displayName: 'Copy manifests to workspace'
-
-    - publish: $(Pipeline.Workspace)/manifests
+    - upload: manifests
       artifact: manifests
 
 - stage: Deploy
@@ -79,7 +75,3 @@ stages:
                 $(imagePullSecret)
               containers: |
                 $(containerRegistry)/$(imageRepository):$(tag)
-
-          - script: |
-              kubectl rollout status deployment/semikallelsummerinternship --timeout=300s --namespace default
-            displayName: 'Check Deployment Status'
